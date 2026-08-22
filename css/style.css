@@ -58,6 +58,14 @@ html, body {
   transform: translateY(14px);
 }
 
+/* 海岸浪花光晕：白色宽描边，内半边被陆地盖住，只露出海面一圈 */
+#coast-foam {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 #land {
   fill: #a6e578;
   stroke: #3e8e41;

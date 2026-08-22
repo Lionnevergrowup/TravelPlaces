@@ -35,9 +35,12 @@
   landPath.setAttribute("d", MAP.PATH);
   const landShadow = document.getElementById("land-shadow");
   landShadow.setAttribute("d", MAP.PATH);
+  const coastFoam = document.getElementById("coast-foam");
+  coastFoam.setAttribute("d", MAP.PATH);
 
-  // ---------- 海洋小装饰 ----------
+  // ---------- 地图小装饰（海洋 + 陆地） ----------
   const DECOR = [
+    // 海洋
     { lng: -152, lat: 12,  e: "🐳" },
     { lng: -128, lat: -22, e: "🌊" },
     { lng: -168, lat: -38, e: "🐠" },
@@ -49,6 +52,20 @@
     { lng: 165,  lat: 40,  e: "🌊" },
     { lng: 2,    lat: 82,  e: "❄️" },
     { lng: 140,  lat: -55, e: "🐧" },
+    // 陆地
+    { lng: 86,   lat: 33,  e: "🏔️" },  // 喜马拉雅
+    { lng: 10,   lat: 46.5,e: "🏔️" },  // 阿尔卑斯
+    { lng: -114, lat: 51,  e: "🏔️" },  // 落基山
+    { lng: -70,  lat: -28, e: "⛰️" },  // 安第斯
+    { lng: 95,   lat: 61,  e: "🌲" },  // 西伯利亚
+    { lng: -102, lat: 57,  e: "🌲" },  // 加拿大
+    { lng: -62,  lat: -5,  e: "🌴" },  // 亚马逊
+    { lng: 113,  lat: -1,  e: "🌴" },  // 婆罗洲
+    { lng: 8,    lat: 22,  e: "🐫" },  // 撒哈拉
+    { lng: -106, lat: 31,  e: "🌵" },  // 墨西哥北部
+    { lng: 35,   lat: 0,   e: "🦁" },  // 东非草原
+    { lng: 134,  lat: -24, e: "🦘" },  // 澳洲内陆
+    { lng: -42,  lat: 73,  e: "⛄" },  // 格陵兰
   ];
   const decorBox = document.getElementById("decor");
   DECOR.forEach((d, i) => {
@@ -606,9 +623,10 @@
     charEl.style.transform =
       `translate(${ch.x.toFixed(1)}px, ${ch.y.toFixed(1)}px) scale(${clamp(1 / z, 0.5, 1.8).toFixed(3)})`;
 
-    // 地图描边宽度 / 陆地投影偏移随缩放调整
+    // 地图描边宽度 / 浪花圈 / 陆地投影偏移随缩放调整
     landPath.setAttribute("stroke-width", Math.max(0.8, 3 / z).toFixed(2));
     trailLine.setAttribute("stroke-width", Math.max(2, 4.5 / z).toFixed(2));
+    coastFoam.setAttribute("stroke-width", clamp(14 / z, 5, 34).toFixed(1));
     landShadow.style.transform = `translateY(${clamp(12 / z, 3, 22).toFixed(1)}px)`;
 
     // 小飞机
