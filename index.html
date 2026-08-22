@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#7ec8e3">
+  <title>我的旅行足迹地图</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 游戏视口 -->
+  <div id="viewport">
+    <!-- 世界（相机通过 transform 移动/缩放它） -->
+    <div id="world">
+      <!-- 世界地图（大致真实：Natural Earth 数据） -->
+      <svg id="map-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <clipPath id="world-clip"><rect x="0" y="0" width="3600" height="1800"/></clipPath>
+        </defs>
+        <path id="land" d="" clip-path="url(#world-clip)" />
+        <polyline id="trail" points="" />
+      </svg>
+      <!-- 地点标记由 JS 生成，插入这里 -->
+      <div id="markers"></div>
+
+      <!-- 小人 -->
+      <div id="character">
+        <div class="char-shadow"></div>
+        <div class="char-flip">
+          <svg class="char-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">
+            <!-- 腿 -->
+            <g class="legs">
+              <rect class="leg leg-l" x="17" y="42" width="7" height="14" rx="3.5" fill="#3d4a5c"/>
+              <rect class="leg leg-r" x="26" y="42" width="7" height="14" rx="3.5" fill="#2f3a49"/>
+            </g>
+            <!-- 背包 -->
+            <rect x="4" y="24" width="13" height="18" rx="5" fill="#e8833a"/>
+            <rect x="6.5" y="27" width="8" height="5" rx="2.5" fill="#c96a26"/>
+            <!-- 身体 -->
+            <rect x="13" y="22" width="23" height="24" rx="9" fill="#4f86f7"/>
+            <rect x="13" y="34" width="23" height="6" fill="#3f6fd6"/>
+            <!-- 手 -->
+            <circle cx="37" cy="36" r="4" fill="#ffd9b3"/>
+            <!-- 头 -->
+            <circle cx="26" cy="13" r="11" fill="#ffd9b3"/>
+            <!-- 帽子 -->
+            <path d="M14.5,11 a11.5,11.5 0 0 1 23,0 l0,-1.5 a11.5,10 0 0 0 -23,0 Z" fill="#f45b69"/>
+            <path d="M14.5,10.2 Q26,3 37.5,10.2 L37.5,7.5 Q26,0.5 14.5,7.5 Z" fill="#f45b69"/>
+            <rect x="33" y="6.5" width="10" height="4" rx="2" fill="#f45b69"/>
+            <!-- 脸 -->
+            <circle cx="30.5" cy="13.5" r="1.7" fill="#2b2b2b"/>
+            <circle cx="23.5" cy="13.5" r="1.7" fill="#2b2b2b"/>
+            <path d="M25,18.5 q2.2,2.2 4.5,0" stroke="#2b2b2b" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+            <circle cx="21" cy="17" r="1.8" fill="#ffb3a0" opacity="0.8"/>
+            <circle cx="33.5" cy="17" r="1.8" fill="#ffb3a0" opacity="0.8"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 顶部 HUD -->
+    <header id="hud">
+      <div id="hud-title">
+        <span class="hud-emoji">🧳</span>
+        <span>我的旅行足迹</span>
+      </div>
+      <div id="hud-count">已点亮 <b id="visited-count">0</b> / <span id="total-count">0</span> 个地方</div>
+    </header>
+
+    <!-- 附近地点提示（靠近时出现，点击展开） -->
+    <button id="near-hint" class="hidden" type="button">
+      <span id="near-hint-emoji">📍</span>
+      <span id="near-hint-text">查看</span>
+      <kbd class="desktop-only">回车</kbd>
+    </button>
+
+    <!-- 右下角控制按钮 -->
+    <div id="side-controls">
+      <button class="ctrl-btn" id="btn-zoom-in" type="button" aria-label="放大">＋</button>
+      <button class="ctrl-btn" id="btn-zoom-out" type="button" aria-label="缩小">－</button>
+      <button class="ctrl-btn" id="btn-locate" type="button" aria-label="回到小人">🎯</button>
+      <button class="ctrl-btn" id="btn-list" type="button" aria-label="地点列表">🗒️</button>
+      <button class="ctrl-btn" id="btn-help" type="button" aria-label="帮助">❓</button>
+    </div>
+
+    <!-- 虚拟摇杆（触屏设备显示） -->
+    <div id="joystick">
+      <div id="joystick-knob"></div>
+    </div>
+  </div>
+
+  <!-- 地点展开卡片 -->
+  <div id="card-overlay" class="overlay hidden">
+    <div id="place-card">
+      <button class="card-close" id="card-close" type="button" aria-label="关闭">✕</button>
+      <div class="card-head">
+        <div class="card-emoji" id="card-emoji">📍</div>
+        <div>
+          <h2 id="card-name">地点</h2>
+          <div class="card-sub" id="card-sub">国家 · English</div>
+        </div>
+      </div>
+      <div class="card-badges" id="card-badges"></div>
+      <div class="card-visits" id="card-visits"></div>
+      <div class="card-foot">🔧 框架示例数据 · 接入邮箱 / Google 地图数据后自动更新</div>
+    </div>
+  </div>
+
+  <!-- 地点列表抽屉 -->
+  <div id="drawer-overlay" class="overlay hidden">
+    <aside id="drawer">
+      <div class="drawer-head">
+        <h3>🗺️ 所有地点</h3>
+        <button class="card-close" id="drawer-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <ul id="drawer-list"></ul>
+    </aside>
+  </div>
+
+  <!-- 帮助说明 -->
+  <div id="help-overlay" class="overlay hidden">
+    <div id="help-card">
+      <button class="card-close" id="help-close" type="button" aria-label="关闭">✕</button>
+      <h2>🧭 怎么玩</h2>
+      <div class="help-cols">
+        <div class="help-block">
+          <h4>💻 电脑（Windows）</h4>
+          <ul>
+            <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动小人</li>
+            <li><kbd>回车</kbd> / <kbd>空格</kbd> 打开附近的地点</li>
+            <li><kbd>Esc</kbd> 关闭弹窗</li>
+            <li><kbd>＋</kbd> <kbd>－</kbd> 或滚轮 缩放地图</li>
+            <li><kbd>L</kbd> 地点列表 · <kbd>F</kbd> 回到小人</li>
+            <li>按住鼠标拖动可平移地图</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>📱 iPhone / iPad</h4>
+          <ul>
+            <li>左下角摇杆移动小人</li>
+            <li>点击地点图标，小人会自动走过去并打开记录</li>
+            <li>双指捏合缩放，单指拖动平移</li>
+            <li>🎯 按钮回到小人身边</li>
+          </ul>
+        </div>
+      </div>
+      <p class="help-tip">💡 走到一个去过的地方，它会亮起并弹跳，打开就能看到当时的旅行记录。虚线是按时间连起来的旅行路线。</p>
+      <button id="help-start" type="button">出发！</button>
+    </div>
+  </div>
+
+  <script src="js/world-map.js"></script>
+  <script src="data/places.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

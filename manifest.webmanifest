@@ -1,0 +1,17 @@
+{
+  "name": "我的旅行足迹地图",
+  "short_name": "旅行足迹",
+  "description": "一个记录去过哪些地方的可交互卡通地图",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#7ec8e3",
+  "theme_color": "#7ec8e3",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
