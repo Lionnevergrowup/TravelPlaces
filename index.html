@@ -6,8 +6,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#7ec8e3">
+  <meta name="description" content="一家四口的卡通旅行足迹地图：在真实世界地图上走一走，记录我们去过的每个地方">
   <title>我的旅行足迹地图</title>
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <!-- 卡通字体（站酷快乐体，自托管，国内外都能加载） -->
   <link rel="stylesheet" href="css/fonts.css">
@@ -38,7 +40,7 @@
       <!-- 地点标记由 JS 生成，插入这里 -->
       <div id="markers"></div>
 
-      <!-- 一家四口（成员由 JS 生成：爸爸带路，妈妈、儿子、女儿跟队） -->
+      <!-- 一家四口（成员由 JS 生成：爸爸带路，妈妈、姐姐、弟弟跟队） -->
       <div id="family"></div>
     </div>
 
@@ -128,25 +130,28 @@
   "home": { "name": "家", "lat": 39.9, "lng": 116.4 },
   "places": [
     {
-      "name": "东京",            必填
-      "lat": 35.68,             必填（纬度）
-      "lng": 139.69,            必填（经度）
-      "nameEn": "Tokyo",        可选
-      "country": "日本",         可选
-      "emoji": "⛩️",            可选，地图图标
-      "status": "visited",      visited=去过 / wishlist=想去
-      "visits": [               每次旅行一条
+      "name": "东京",
+      "lat": 35.68,
+      "lng": 139.69,
+      "nameEn": "Tokyo",
+      "country": "日本",
+      "emoji": "⛩️",
+      "status": "visited",
+      "visits": [
         {
           "date": "2024-11-22",
           "title": "红叶季之旅",
-          "notes": "回忆备注…",
-          "photos": ["https://…/照片.jpg"]
+          "notes": "回忆备注",
+          "photos": ["https://example.com/photo.jpg"]
         }
       ]
     }
   ]
 }</pre>
-        <p>💡 也可以在电脑上直接把 .json 文件<b>拖到页面上</b>导入。</p>
+        <p>· <b>name / lat / lng</b> 必填，其余可选</p>
+        <p>· <b>status</b>：<code>visited</code> 去过（默认）/ <code>wishlist</code> 想去</p>
+        <p>· <b>visits</b>：每次旅行一条，日期用 YYYY-MM-DD</p>
+        <p>💡 上面就是合法 JSON，可以直接复制当模板。电脑上也可以把 .json 文件<b>拖到页面上</b>导入。</p>
       </details>
       <input type="file" id="file-input" accept=".json,application/json" hidden>
     </div>

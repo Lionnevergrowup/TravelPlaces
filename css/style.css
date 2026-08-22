@@ -20,6 +20,7 @@ html, body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none; /* iOS 长按不弹出系统菜单 */
 }
 
 .hidden { display: none !important; }
@@ -286,6 +287,9 @@ html, body {
   letter-spacing: 1px;
   color: var(--ink);
   white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 3px 0 rgba(53, 64, 90, 0.2);
 }
 
@@ -671,8 +675,22 @@ html, body {
 .drawer-item:active, .drawer-item:hover { background: #f6f1e6; }
 .drawer-item .d-emoji { font-size: 26px; width: 34px; text-align: center; }
 .drawer-item .d-info { flex: 1; min-width: 0; }
-.drawer-item .d-name { font-size: 15.5px; font-weight: 700; color: #2c3e50; }
-.drawer-item .d-sub { font-size: 12.5px; color: #8a99a8; margin-top: 1px; }
+.drawer-item .d-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.drawer-item .d-sub {
+  font-size: 12.5px;
+  color: #8a99a8;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .drawer-item .d-go {
   flex: none;
   padding: 6px 14px;

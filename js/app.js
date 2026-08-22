@@ -124,6 +124,7 @@
 
       inner.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (performance.now() < suppressClickUntil) return; // 拖动收尾的误触
         if (p.id === activeId) openCard(p.id);
         else walkTo(p, /*openOnArrive*/ true);
       });
@@ -137,7 +138,11 @@
     trailLine.setAttribute("points", "");
     const visited = places
       .filter((p) => p.visits && p.visits.length > 0)
-      .map((p) => ({ p, first: p.visits.map((v) => v.date).sort()[0] }))
+      .map((p) => ({
+        p,
+        // 取最早一次有日期的到访；没有日期的排到最后
+        first: p.visits.map((v) => v.date).filter(Boolean).sort()[0] || "9999-99-99",
+      }))
       .sort((a, b) => (a.first < b.first ? -1 : 1))
       .map((o) => o.p);
     if (visited.length < 2) return;
@@ -182,10 +187,13 @@
     const t = dist - seg.start;
     const x = seg.x1 + seg.dx * t;
     const y = seg.y1 + seg.dy * t;
-    // ✈️ emoji 默认朝右上 45°，旋转对齐航向
-    const deg = Math.atan2(seg.dy, seg.dx) * 180 / Math.PI + 45;
+    // ✈️ emoji 默认朝右上 45°，旋转对齐航向；向左飞时垂直镜像，避免机腹朝上
+    const h = Math.atan2(seg.dy, seg.dx) * 180 / Math.PI;
+    const rot = seg.dx < 0
+      ? `rotate(${(h - 45).toFixed(1)}deg) scaleY(-1)`
+      : `rotate(${(h + 45).toFixed(1)}deg)`;
     planeEl.style.transform =
-      `translate(${(x - 15).toFixed(1)}px, ${(y - 15).toFixed(1)}px) scale(${inv}) rotate(${deg.toFixed(1)}deg)`;
+      `translate(${(x - 15).toFixed(1)}px, ${(y - 15).toFixed(1)}px) scale(${inv}) ${rot}`;
   }
 
   // ---------- 统计 ----------
@@ -245,8 +253,8 @@
     <circle cx="34.5" cy="6" r="2.6" fill="#ffd166" stroke="#e0a93e" stroke-width="1.2"/>
     ${FACE}`;
 
-  // 儿子：绿 T 恤 + 反戴蓝帽
-  const SVG_SON = `
+  // 弟弟：绿 T 恤 + 反戴蓝帽（最小的一只）
+  const SVG_BRO = `
     <g ${OUTLINE}>
       ${LEGS("#3d4a5c", "#2f3a49")}
       <rect x="13" y="22" width="23" height="24" rx="9" fill="#58c15c"/>
@@ -260,8 +268,8 @@
     </g>
     ${FACE}`;
 
-  // 女儿：黄色小裙子 + 双马尾红蝴蝶结
-  const SVG_GIRL = `
+  // 姐姐：黄色小裙子 + 双马尾红蝴蝶结（比弟弟高）
+  const SVG_SIS = `
     <g ${OUTLINE}>
       ${LEGS("#c96a7c", "#b55a6c")}
       <path d="M17,24 Q26,19 35,24 L38.5,45 Q26,50 13.5,45 Z" fill="#ffd166"/>
@@ -275,11 +283,12 @@
     <circle cx="39.5" cy="7.5" r="2.2" fill="#f45b69" stroke="#c23a4a" stroke-width="1"/>
     ${FACE}`;
 
+  // 队伍按年龄排：爸爸 → 妈妈 → 姐姐 → 弟弟
   const MEMBERS = [
     { id: "dad", size: 1.0, svg: SVG_DAD },
     { id: "mom", size: 0.95, svg: SVG_MOM },
-    { id: "son", size: 0.74, svg: SVG_SON },
-    { id: "daughter", size: 0.68, svg: SVG_GIRL },
+    { id: "sister", size: 0.78, svg: SVG_SIS },
+    { id: "brother", size: 0.66, svg: SVG_BRO },
   ];
 
   // ---------- 状态 ----------
@@ -452,9 +461,12 @@
   const pointers = new Map(); // pointerId -> {x, y}
   let dragging = false;
   let pinchDist = 0;
+  let suppressClickUntil = 0; // 拖动结束后短暂屏蔽误触点击
 
   viewport.addEventListener("pointerdown", (e) => {
     if (e.target.closest(".marker-inner, .ctrl-btn, #joystick, #near-hint, #hud")) return;
+    // 捕获指针：即使在窗口外松手也能收到 pointerup，避免拖动状态卡住
+    try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
@@ -493,7 +505,11 @@
   function endPointer(e) {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchDist = 0;
-    if (pointers.size === 0) dragging = false;
+    if (pointers.size === 0) {
+      // 拖动刚结束时，松手落在标记上会触发一次 click，短暂屏蔽它
+      if (dragging) suppressClickUntil = performance.now() + 300;
+      dragging = false;
+    }
   }
   viewport.addEventListener("pointerup", endPointer);
   viewport.addEventListener("pointercancel", endPointer);
@@ -577,6 +593,13 @@
             img.src = url;
             img.alt = v.title || p.name;
             img.loading = "lazy";
+            // 图片加载失败时换成占位块，不显示浏览器破图图标
+            img.onerror = () => {
+              const broken = document.createElement("div");
+              broken.className = "photo-placeholder";
+              broken.textContent = "🖼️ 图片加载失败";
+              img.replaceWith(broken);
+            };
             ph.appendChild(img);
           }
         } else {
@@ -622,9 +645,10 @@
       nm.textContent = p.name;
       const sub = document.createElement("div");
       sub.className = "d-sub";
-      sub.textContent = p.visits?.length
-        ? `${p.country} · ${p.visits.length} 次到访`
-        : `${p.country} · 想去`;
+      sub.textContent = [
+        p.country,
+        p.visits?.length ? `${p.visits.length} 次到访` : "想去",
+      ].filter(Boolean).join(" · ");
       info.appendChild(nm);
       info.appendChild(sub);
 
@@ -785,7 +809,8 @@
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const norm = normalizeData(JSON.parse(reader.result));
+        // 去掉 Windows 记事本等编辑器写入的 UTF-8 BOM，否则 JSON.parse 会失败
+        const norm = normalizeData(JSON.parse(reader.result.replace(/^\uFEFF/, "")));
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ home: norm.home, places: norm.places }));
           localStorage.setItem(META_KEY, JSON.stringify({ importedAt: Date.now(), fileName: file.name }));
@@ -872,7 +897,9 @@
     e.preventDefault();
     const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (f) {
+      closeAllOverlays(); // 避免和其他弹窗叠在一起
       updateDataStatus();
+      $("data-msg").classList.add("hidden");
       $("data-overlay").classList.remove("hidden");
       handleImportFile(f);
     }
