@@ -1,0 +1,52 @@
+{
+  "home": { "name": "家", "lat": 39.9, "lng": 116.4 },
+  "places": [
+    {
+      "id": "tokyo",
+      "name": "东京",
+      "nameEn": "Tokyo",
+      "country": "日本",
+      "emoji": "⛩️",
+      "lat": 35.68,
+      "lng": 139.69,
+      "status": "visited",
+      "visits": [
+        {
+          "date": "2024-11-22",
+          "title": "红叶季之旅",
+          "notes": "明治神宫、筑地市场……（这是示例文件，请复制后改成你自己的记录）",
+          "photos": []
+        }
+      ]
+    },
+    {
+      "id": "paris",
+      "name": "巴黎",
+      "nameEn": "Paris",
+      "country": "法国",
+      "emoji": "🥐",
+      "lat": 48.86,
+      "lng": 2.35,
+      "status": "visited",
+      "visits": [
+        {
+          "date": "2024-06-30",
+          "title": "卢浮宫与塞纳河",
+          "notes": "同一个地点可以有多条 visits 记录。",
+          "photos": ["https://example.com/photo1.jpg"]
+        }
+      ]
+    },
+    {
+      "id": "reykjavik",
+      "name": "雷克雅未克",
+      "nameEn": "Reykjavik",
+      "country": "冰岛",
+      "emoji": "🌋",
+      "lat": 64.15,
+      "lng": -21.94,
+      "status": "wishlist",
+      "visits": []
+    }
+  ]
+}

@@ -130,6 +130,31 @@ html, body {
 .member:nth-child(3) .char-svg, .member:nth-child(3) .leg { animation-delay: -0.22s; }
 .member:nth-child(4) .char-svg, .member:nth-child(4) .leg { animation-delay: -0.30s; }
 
+/* 到达庆祝：全家开心跳（写在 walking 之后，优先生效） */
+.member.cheer .char-svg {
+  animation: cheer-jump 0.42s cubic-bezier(0.3, 1.5, 0.5, 1) 2 alternate;
+}
+@keyframes cheer-jump {
+  from { transform: translateY(0) rotate(-4deg); }
+  to   { transform: translateY(-18px) rotate(6deg); }
+}
+
+/* 彩纸 */
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  will-change: transform, opacity;
+}
+
 .char-shadow {
   position: absolute;
   left: -14px;
@@ -737,9 +762,105 @@ kbd {
 }
 #help-start:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(53, 64, 90, 0.3); }
 
+/* ============ 我的数据面板 ============ */
+#data-card {
+  position: relative;
+  width: min(500px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 26px;
+  background: #fffdf7;
+  border: 3.5px solid var(--ink);
+  box-shadow: 0 8px 0 rgba(53, 64, 90, 0.25), 0 18px 45px rgba(10, 30, 50, 0.3);
+  padding: 24px;
+  animation: card-pop 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+#data-card h2 {
+  font-family: var(--font-fun);
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+#data-status {
+  padding: 8px 13px;
+  border-radius: 12px;
+  background: #eef4fb;
+  border: 2px solid #d5e3f2;
+  font-size: 13.5px;
+  color: #33566b;
+  margin-bottom: 14px;
+}
+
+.data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.data-btn {
+  padding: 12px 18px;
+  border: 2.5px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-fun);
+  font-size: 16px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 0 rgba(53, 64, 90, 0.22);
+  cursor: pointer;
+  text-align: left;
+}
+.data-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(53, 64, 90, 0.22); }
+.data-btn.primary { background: #4f86f7; color: #fff; }
+.data-btn.danger { background: #fff5f5; color: #b8434f; border-color: #b8434f; }
+
+#data-msg {
+  margin-top: 12px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: #e9f7e2;
+  border: 2px solid #b8dfa5;
+  color: #3e7d33;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+#data-msg.error {
+  background: #fdeeee;
+  border-color: #eebbbb;
+  color: #b8434f;
+}
+
+.data-note {
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #6b7c90;
+  background: #f3f6f9;
+  border-radius: 12px;
+  padding: 10px 13px;
+}
+
+.data-format { margin-top: 12px; font-size: 13px; color: #5c6b7a; }
+.data-format summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.data-format pre {
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2d3648;
+  color: #cfe3c8;
+  font-size: 11.5px;
+  line-height: 1.55;
+  overflow-x: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.data-format p { margin-top: 6px; line-height: 1.5; }
+
 /* 小屏优化 */
 @media (max-width: 480px) {
   #hud-title { font-size: 15px; padding: 7px 13px; }
   .ctrl-btn { width: 42px; height: 42px; }
-  #place-card, #help-card { padding: 18px; }
+  #place-card, #help-card, #data-card { padding: 18px; }
 }

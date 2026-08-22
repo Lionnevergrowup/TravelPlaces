@@ -71,6 +71,7 @@
       <button class="ctrl-btn" id="btn-zoom-out" type="button" aria-label="缩小">－</button>
       <button class="ctrl-btn" id="btn-locate" type="button" aria-label="回到一家人">🎯</button>
       <button class="ctrl-btn" id="btn-list" type="button" aria-label="地点列表">🗒️</button>
+      <button class="ctrl-btn" id="btn-data" type="button" aria-label="我的数据">📂</button>
       <button class="ctrl-btn" id="btn-help" type="button" aria-label="帮助">❓</button>
     </div>
 
@@ -93,7 +94,7 @@
       </div>
       <div class="card-badges" id="card-badges"></div>
       <div class="card-visits" id="card-visits"></div>
-      <div class="card-foot">🔧 框架示例数据 · 接入邮箱 / Google 地图数据后自动更新</div>
+      <div class="card-foot">🔒 数据只保存在这台设备的浏览器里，不会上传到任何地方</div>
     </div>
   </div>
 
@@ -106,6 +107,49 @@
       </div>
       <ul id="drawer-list"></ul>
     </aside>
+  </div>
+
+  <!-- 我的数据（本机导入，绝不上传） -->
+  <div id="data-overlay" class="overlay hidden">
+    <div id="data-card">
+      <button class="card-close" id="data-close" type="button" aria-label="关闭">✕</button>
+      <h2>📂 我的旅行数据</h2>
+      <p id="data-status">📊 当前：示例数据</p>
+      <div class="data-actions">
+        <button class="data-btn primary" id="btn-import" type="button">📥 导入数据文件（.json）</button>
+        <button class="data-btn" id="btn-template" type="button">📄 下载数据模板</button>
+        <button class="data-btn danger" id="btn-reset-data" type="button">🔄 恢复示例数据</button>
+      </div>
+      <p id="data-msg" class="hidden"></p>
+      <p class="data-note">🔒 你的文件只在<b>本机浏览器</b>里解析和保存（localStorage），<b>不会上传</b>到 GitHub 或任何服务器。换设备或清了浏览器数据后需要重新导入。</p>
+      <details class="data-format">
+        <summary>📖 数据格式说明</summary>
+        <pre>{
+  "home": { "name": "家", "lat": 39.9, "lng": 116.4 },
+  "places": [
+    {
+      "name": "东京",            必填
+      "lat": 35.68,             必填（纬度）
+      "lng": 139.69,            必填（经度）
+      "nameEn": "Tokyo",        可选
+      "country": "日本",         可选
+      "emoji": "⛩️",            可选，地图图标
+      "status": "visited",      visited=去过 / wishlist=想去
+      "visits": [               每次旅行一条
+        {
+          "date": "2024-11-22",
+          "title": "红叶季之旅",
+          "notes": "回忆备注…",
+          "photos": ["https://…/照片.jpg"]
+        }
+      ]
+    }
+  ]
+}</pre>
+        <p>💡 也可以在电脑上直接把 .json 文件<b>拖到页面上</b>导入。</p>
+      </details>
+      <input type="file" id="file-input" accept=".json,application/json" hidden>
+    </div>
   </div>
 
   <!-- 帮助说明 -->
@@ -135,7 +179,8 @@
           </ul>
         </div>
       </div>
-      <p class="help-tip">💡 走到一个去过的地方，它会亮起并弹跳，打开就能看到当时的旅行记录。虚线是按时间连起来的旅行路线。</p>
+      <p class="help-tip">💡 走到一个去过的地方，它会亮起，全家会欢呼撒彩纸🎉，打开就能看到当时的旅行记录。虚线是按时间连起来的旅行路线。</p>
+      <p class="help-tip">📂 右下角的 📂 按钮可以导入你自己的旅行数据文件（JSON）。数据只保存在本机浏览器里，不会上传到任何地方。</p>
       <button id="help-start" type="button">出发！</button>
     </div>
   </div>

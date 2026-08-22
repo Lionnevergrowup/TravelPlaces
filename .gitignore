@@ -1,0 +1,12 @@
+# ⚠️ 用户的真实旅行数据绝不入库 —— 本仓库只是"显示器"
+# 数据通过网页右下角 📂 按钮在本机导入，保存在浏览器 localStorage 里
+travel-data.json
+my-*.json
+*-private.json
+data/my-*
+data/private*
+
+# 系统杂项
+.DS_Store
+Thumbs.db
+node_modules/

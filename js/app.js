@@ -81,15 +81,18 @@
     decorBox.appendChild(el);
   });
 
-  // ---------- 地点标记 ----------
-  const places = DATA.places.map((p) => ({
-    ...p,
-    x: toX(p.lng),
-    y: toY(p.lat),
-    el: null,
-  }));
+  // ---------- 地点标记（可随导入的数据重建） ----------
+  let places = [];
 
-  for (const p of places) {
+  function buildPlaces(data) {
+    markersBox.innerHTML = "";
+    places = data.places.map((p) => ({
+      ...p,
+      x: toX(p.lng),
+      y: toY(p.lat),
+      el: null,
+    }));
+    for (const p of places) {
     const m = document.createElement("div");
     m.className = "marker" + (p.status === "wishlist" ? " wishlist" : "");
     m.style.left = p.x + "px";
@@ -119,32 +122,39 @@
     markersBox.appendChild(m);
     p.el = m;
 
-    inner.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (p.id === activeId) openCard(p.id);
-      else walkTo(p, /*openOnArrive*/ true);
-    });
+      inner.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (p.id === activeId) openCard(p.id);
+        else walkTo(p, /*openOnArrive*/ true);
+      });
+    }
   }
 
   // ---------- 旅行路线（按首次到访时间连线） ----------
-  const trailPts = (() => {
+  let trailPts = null;
+  function buildTrail() {
+    trailPts = null;
+    trailLine.setAttribute("points", "");
     const visited = places
       .filter((p) => p.visits && p.visits.length > 0)
       .map((p) => ({ p, first: p.visits.map((v) => v.date).sort()[0] }))
       .sort((a, b) => (a.first < b.first ? -1 : 1))
       .map((o) => o.p);
-    if (visited.length < 2) return null;
+    if (visited.length < 2) return;
     trailLine.setAttribute(
       "points",
       visited.map((p) => `${p.x},${p.y}`).join(" ")
     );
-    return visited.map((p) => [p.x, p.y]);
-  })();
+    trailPts = visited.map((p) => [p.x, p.y]);
+  }
 
   // ---------- 沿路线飞行的小飞机 ----------
   const planeEl = document.getElementById("plane");
-  let planeSegs = null; // [{x1,y1,dx,dy,len,start}], totalLen
-  if (trailPts) {
+  let planeSegs = null; // {segs:[{x1,y1,dx,dy,len,start}], total}
+  function buildPlane() {
+    planeSegs = null;
+    planeEl.classList.add("hidden");
+    if (!trailPts) return;
     let total = 0;
     const segs = [];
     for (let i = 0; i < trailPts.length - 1; i++) {
@@ -179,9 +189,11 @@
   }
 
   // ---------- 统计 ----------
-  const visitedTotal = places.filter((p) => p.visits && p.visits.length > 0).length;
-  $("visited-count").textContent = visitedTotal;
-  $("total-count").textContent = places.length;
+  function updateStats() {
+    const visitedTotal = places.filter((p) => p.visits && p.visits.length > 0).length;
+    $("visited-count").textContent = visitedTotal;
+    $("total-count").textContent = places.length;
+  }
 
   // ---------- 一家四口 ----------
   const FACE = `
@@ -360,6 +372,7 @@
     // 弹窗打开时只响应关闭
     if (!$("card-overlay").classList.contains("hidden") ||
         !$("help-overlay").classList.contains("hidden") ||
+        !$("data-overlay").classList.contains("hidden") ||
         !$("drawer-overlay").classList.contains("hidden")) {
       if (e.code === "Escape" || e.code === "Enter" || e.code === "Space") {
         closeAllOverlays();
@@ -518,15 +531,15 @@
     const b1 = document.createElement("span");
     if (p.visits && p.visits.length > 0) {
       b1.className = "badge visited";
-      b1.textContent = "✅ 去过";
+      b1.textContent = "👨‍👩‍👧‍👦 我们来过";
       badges.appendChild(b1);
       const b2 = document.createElement("span");
       b2.className = "badge count";
-      b2.textContent = `共 ${p.visits.length} 次到访`;
+      b2.textContent = `全家 ${p.visits.length} 次旅行`;
       badges.appendChild(b2);
     } else {
       b1.className = "badge wishlist";
-      b1.textContent = "🌟 想去清单";
+      b1.textContent = "🌟 全家想去";
       badges.appendChild(b1);
     }
 
@@ -578,7 +591,7 @@
     } else {
       const empty = document.createElement("div");
       empty.className = "no-visit";
-      empty.textContent = "还没有到访记录，这是想去的地方 ✈️";
+      empty.textContent = "这里在全家的愿望清单上，还没去过 ✈️";
       box.appendChild(empty);
     }
 
@@ -642,6 +655,7 @@
     $("card-overlay").classList.add("hidden");
     $("drawer-overlay").classList.add("hidden");
     $("help-overlay").classList.add("hidden");
+    $("data-overlay").classList.add("hidden");
   }
   $("card-close").onclick = closeAllOverlays;
   $("drawer-close").onclick = closeAllOverlays;
@@ -656,6 +670,9 @@
   $("help-overlay").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) closeAllOverlays();
   });
+  $("data-overlay").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeAllOverlays();
+  });
 
   // 首次访问显示帮助
   try {
@@ -664,6 +681,262 @@
       localStorage.setItem("tp_seen_help", "1");
     }
   } catch (_) { /* 隐私模式下忽略 */ }
+
+  // ========== 数据管理 ==========
+  // 用户数据只保存在本机浏览器 localStorage，绝不上传到任何服务器 / GitHub。
+  const STORAGE_KEY = "tp_user_data_v1";
+  const META_KEY = "tp_user_data_meta_v1";
+  let dataMeta = { source: "demo", importedAt: null, fileName: "" };
+
+  // 校验并规范化用户提供的 JSON（宽容模式：跳过无效条目）
+  function normalizeData(raw) {
+    if (!raw || typeof raw !== "object") throw new Error("文件内容不是有效的 JSON 对象");
+    const list = raw.places;
+    if (!Array.isArray(list) || list.length === 0) throw new Error("缺少 places 数组（或为空）");
+    const seen = new Set();
+    const out = [];
+    let skipped = 0;
+    list.forEach((p, i) => {
+      if (!p || typeof p !== "object") { skipped++; return; }
+      const lat = Number(p.lat), lng = Number(p.lng);
+      const name = (p.name || p.nameEn || "").toString().trim();
+      if (!name || !isFinite(lat) || !isFinite(lng) ||
+          lat < -90 || lat > 90 || lng < -180 || lng > 180) { skipped++; return; }
+      let id = (p.id || "").toString().trim() || ("p" + i);
+      while (seen.has(id)) id += "x";
+      seen.add(id);
+      const visits = Array.isArray(p.visits)
+        ? p.visits.filter((v) => v && typeof v === "object").map((v) => ({
+            date: (v.date || "").toString(),
+            title: (v.title || "").toString(),
+            notes: (v.notes || "").toString(),
+            photos: Array.isArray(v.photos) ? v.photos.map(String) : [],
+          }))
+        : [];
+      out.push({
+        id, name,
+        nameEn: (p.nameEn || "").toString(),
+        country: (p.country || "").toString(),
+        emoji: (p.emoji || "📍").toString(),
+        lat, lng,
+        status: p.status === "wishlist" ? "wishlist" : "visited",
+        visits,
+      });
+    });
+    if (!out.length) throw new Error("没有一条有效的地点记录（每条至少要有 name、lat、lng）");
+    let h = raw.home;
+    if (h && isFinite(Number(h.lat)) && isFinite(Number(h.lng))) {
+      h = { name: (h.name || "家").toString(), lat: Number(h.lat), lng: Number(h.lng) };
+    } else {
+      h = { name: "家", lat: out[0].lat, lng: out[0].lng };
+    }
+    return { home: h, places: out, skipped };
+  }
+
+  // 应用一份数据：重建地图内容并把一家人送回家
+  function applyData(data) {
+    buildPlaces(data);
+    buildTrail();
+    buildPlane();
+    updateStats();
+    ch.x = clamp(toX(data.home.lng), 8, MAP.W - 8);
+    ch.y = clamp(toY(data.home.lat), 8, MAP.H - 8);
+    hist.length = 0;
+    autoTarget = null;
+    activeId = null;
+    cheered.clear();
+    // 出生点旁边的地点不触发开场庆祝
+    for (const p of places) {
+      if (Math.hypot(p.x - ch.x, p.y - ch.y) < 80) cheered.add(p.id);
+    }
+    nearHint.classList.add("hidden");
+    family.forEach((f, i) => {
+      f.x = ch.x - i * 24;
+      f.y = ch.y;
+      f.facing = 1;
+    });
+    cam.x = ch.x;
+    cam.y = ch.y;
+    cam.follow = true;
+  }
+
+  function updateDataStatus() {
+    const el = $("data-status");
+    if (!el) return;
+    if (dataMeta.source === "user") {
+      const d = dataMeta.importedAt ? new Date(dataMeta.importedAt) : null;
+      const when = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "";
+      el.textContent = `📊 当前：我的数据（${places.length} 个地点${dataMeta.fileName ? " · " + dataMeta.fileName : ""}${when ? " · " + when + " 导入" : ""}）`;
+    } else {
+      el.textContent = "📊 当前：示例数据（还没导入自己的文件）";
+    }
+  }
+
+  function showDataMsg(msg, isError) {
+    const el = $("data-msg");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    el.classList.toggle("error", !!isError);
+  }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const norm = normalizeData(JSON.parse(reader.result));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ home: norm.home, places: norm.places }));
+          localStorage.setItem(META_KEY, JSON.stringify({ importedAt: Date.now(), fileName: file.name }));
+        } catch (_) {
+          showDataMsg("⚠️ 文件太大，无法保存到本机存储：本次可以正常显示，刷新后需要重新导入", true);
+        }
+        dataMeta = { source: "user", importedAt: Date.now(), fileName: file.name };
+        applyData(norm);
+        updateDataStatus();
+        showDataMsg(`✅ 导入成功：${norm.places.length} 个地点` + (norm.skipped ? `（跳过 ${norm.skipped} 条无效记录）` : ""), false);
+      } catch (err) {
+        showDataMsg("❌ 导入失败：" + err.message, true);
+      }
+    };
+    reader.onerror = () => showDataMsg("❌ 文件读取失败", true);
+    reader.readAsText(file);
+  }
+
+  function resetToDemo() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(META_KEY);
+    } catch (_) {}
+    dataMeta = { source: "demo", importedAt: null, fileName: "" };
+    applyData(normalizeData(DATA));
+    updateDataStatus();
+    showDataMsg("✅ 已恢复示例数据", false);
+  }
+
+  // 数据面板按钮
+  $("btn-data").onclick = () => {
+    updateDataStatus();
+    $("data-msg").classList.add("hidden");
+    $("data-overlay").classList.remove("hidden");
+  };
+  $("data-close").onclick = () => $("data-overlay").classList.add("hidden");
+  $("btn-import").onclick = () => $("file-input").click();
+  $("file-input").addEventListener("change", (e) => {
+    handleImportFile(e.target.files && e.target.files[0]);
+    e.target.value = "";
+  });
+  $("btn-reset-data").onclick = resetToDemo;
+  $("btn-template").onclick = () => {
+    const template = {
+      home: { name: "家", lat: 39.9, lng: 116.4 },
+      places: [
+        {
+          id: "tokyo",
+          name: "东京",
+          nameEn: "Tokyo",
+          country: "日本",
+          emoji: "⛩️",
+          lat: 35.68,
+          lng: 139.69,
+          status: "visited",
+          visits: [
+            { date: "2024-11-22", title: "红叶季之旅", notes: "明治神宫、筑地市场……", photos: [] }
+          ]
+        },
+        {
+          id: "reykjavik",
+          name: "雷克雅未克",
+          nameEn: "Reykjavik",
+          country: "冰岛",
+          emoji: "🌋",
+          lat: 64.15,
+          lng: -21.94,
+          status: "wishlist",
+          visits: []
+        }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "travel-data.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+
+  // 拖一个 JSON 文件到页面上也能导入（Windows 上很方便）
+  addEventListener("dragover", (e) => e.preventDefault());
+  addEventListener("drop", (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) {
+      updateDataStatus();
+      $("data-overlay").classList.remove("hidden");
+      handleImportFile(f);
+    }
+  });
+
+  // ========== 到达庆祝 ==========
+  const cheered = new Set();
+  function celebrate(place) {
+    if (cheered.has(place.id)) return;
+    cheered.add(place.id);
+    family.forEach((f, i) => {
+      setTimeout(() => {
+        f.el.classList.add("cheer");
+        setTimeout(() => f.el.classList.remove("cheer"), 1000);
+      }, i * 100);
+    });
+    burstConfetti(place.x, place.y - 20);
+  }
+  function burstConfetti(wx, wy) {
+    const colors = ["#f45b69", "#ffd166", "#4f86f7", "#58c15c", "#ff8f5c", "#a78bfa"];
+    const layer = document.createElement("div");
+    layer.className = "confetti-layer";
+    viewport.appendChild(layer);
+    const z = cam.z;
+    const sx = vw / 2 + (wx - cam.x) * z;
+    const sy = vh / 2 + (wy - cam.y) * z;
+    for (let i = 0; i < 24; i++) {
+      const s = document.createElement("span");
+      s.className = "confetti-piece";
+      s.style.background = colors[i % colors.length];
+      s.style.left = sx + "px";
+      s.style.top = sy + "px";
+      layer.appendChild(s);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 90;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist * 0.6 - 70 - Math.random() * 40;
+      const rot = Math.random() * 720 - 360;
+      s.animate(
+        [
+          { transform: "translate(-50%,-50%) rotate(0deg)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 130}px)) rotate(${rot}deg)`, opacity: 0 },
+        ],
+        { duration: 900 + Math.random() * 400, easing: "cubic-bezier(.2,.6,.4,1)" }
+      );
+    }
+    setTimeout(() => layer.remove(), 1400);
+  }
+
+  // ========== 启动：优先本机保存的数据，否则示例数据 ==========
+  (function boot() {
+    let data = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        data = normalizeData(JSON.parse(raw));
+        const meta = JSON.parse(localStorage.getItem(META_KEY) || "{}");
+        dataMeta = { source: "user", importedAt: meta.importedAt || null, fileName: meta.fileName || "" };
+      }
+    } catch (_) {
+      data = null; // 本机存储损坏则退回示例数据
+    }
+    applyData(data || normalizeData(DATA));
+  })();
 
   // ---------- 主循环 ----------
   let lastT = performance.now();
@@ -802,8 +1075,10 @@
           best.el.classList.add("active");
           nearHintEmoji.textContent = best.emoji || "📍";
           nearHintText.textContent =
-            best.visits?.length ? `查看「${best.name}」的记录` : `看看「${best.name}」`;
+            best.visits?.length ? `看看我们在「${best.name}」的回忆` : `看看「${best.name}」`;
           nearHint.classList.remove("hidden");
+          // 走到去过的地方：全家欢呼 + 彩纸
+          if (best.visits?.length) celebrate(best);
         } else {
           nearHint.classList.add("hidden");
         }
