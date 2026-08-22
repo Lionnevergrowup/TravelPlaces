@@ -86,8 +86,8 @@ html, body {
   to { stroke-dashoffset: -22; }
 }
 
-/* ============ 小人 ============ */
-#character {
+/* ============ 一家四口 ============ */
+.member {
   position: absolute;
   width: 0;
   height: 0;
@@ -111,7 +111,7 @@ html, body {
   transform-origin: 50% 100%;
 }
 
-#character.walking .char-svg {
+.member.walking .char-svg {
   animation: char-bob 0.35s ease-in-out infinite alternate;
 }
 @keyframes char-bob {
@@ -119,11 +119,16 @@ html, body {
   to   { transform: translateY(-3px) rotate(2deg); }
 }
 
-#character.walking .leg-l { animation: leg-swing-l 0.35s ease-in-out infinite alternate; }
-#character.walking .leg-r { animation: leg-swing-r 0.35s ease-in-out infinite alternate; }
+.member.walking .leg-l { animation: leg-swing-l 0.35s ease-in-out infinite alternate; }
+.member.walking .leg-r { animation: leg-swing-r 0.35s ease-in-out infinite alternate; }
 .leg { transform-origin: center 42px; transform-box: view-box; }
 @keyframes leg-swing-l { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
 @keyframes leg-swing-r { from { transform: rotate(18deg); }  to { transform: rotate(-18deg); } }
+
+/* 跟队成员步伐错拍，更自然 */
+.member:nth-child(2) .char-svg, .member:nth-child(2) .leg { animation-delay: -0.12s; }
+.member:nth-child(3) .char-svg, .member:nth-child(3) .leg { animation-delay: -0.22s; }
+.member:nth-child(4) .char-svg, .member:nth-child(4) .leg { animation-delay: -0.30s; }
 
 .char-shadow {
   position: absolute;

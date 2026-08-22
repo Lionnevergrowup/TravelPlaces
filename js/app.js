@@ -20,8 +20,7 @@
   const landPath = $("land");
   const trailLine = $("trail");
   const markersBox = $("markers");
-  const charEl = $("character");
-  const charFlip = charEl.querySelector(".char-flip");
+  const familyBox = $("family");
   const nearHint = $("near-hint");
   const nearHintEmoji = $("near-hint-emoji");
   const nearHintText = $("near-hint-text");
@@ -184,6 +183,93 @@
   $("visited-count").textContent = visitedTotal;
   $("total-count").textContent = places.length;
 
+  // ---------- 一家四口 ----------
+  const FACE = `
+    <circle cx="30.5" cy="13.5" r="1.7" fill="#2b2b2b"/>
+    <circle cx="23.5" cy="13.5" r="1.7" fill="#2b2b2b"/>
+    <path d="M25,18.5 q2.2,2.2 4.5,0" stroke="#2b2b2b" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <circle cx="21" cy="17" r="1.8" fill="#ffb3a0" opacity="0.8"/>
+    <circle cx="33.5" cy="17" r="1.8" fill="#ffb3a0" opacity="0.8"/>`;
+
+  const LEGS = (c1, c2) => `
+    <g class="legs">
+      <rect class="leg leg-l" x="17" y="42" width="7" height="14" rx="3.5" fill="${c1}"/>
+      <rect class="leg leg-r" x="26" y="42" width="7" height="14" rx="3.5" fill="${c2}"/>
+    </g>`;
+
+  const OUTLINE = `stroke="#35405a" stroke-width="2" stroke-linejoin="round" style="paint-order:stroke fill;"`;
+
+  // 爸爸：蓝衣红帽 + 橙色背包
+  const SVG_DAD = `
+    <g ${OUTLINE}>
+      ${LEGS("#3d4a5c", "#2f3a49")}
+      <rect x="4" y="24" width="13" height="18" rx="5" fill="#e8833a"/>
+      <rect x="6.5" y="27" width="8" height="5" rx="2.5" fill="#c96a26" stroke="none"/>
+      <rect x="13" y="22" width="23" height="24" rx="9" fill="#4f86f7"/>
+      <rect x="13" y="34" width="23" height="6" fill="#3f6fd6" stroke="none"/>
+      <circle cx="37" cy="36" r="4" fill="#ffd9b3"/>
+      <circle cx="26" cy="13" r="11" fill="#ffd9b3"/>
+    </g>
+    <g stroke="#c23a4a" stroke-width="1.6" stroke-linejoin="round" style="paint-order:stroke fill;">
+      <path d="M14.5,11 a11.5,11.5 0 0 1 23,0 l0,-1.5 a11.5,10 0 0 0 -23,0 Z" fill="#f45b69"/>
+      <path d="M14.5,10.2 Q26,3 37.5,10.2 L37.5,7.5 Q26,0.5 14.5,7.5 Z" fill="#f45b69"/>
+      <rect x="33" y="6.5" width="10" height="4" rx="2" fill="#f45b69"/>
+    </g>
+    ${FACE}`;
+
+  // 妈妈：粉色连衣裙 + 棕色长发别小花
+  const SVG_MOM = `
+    <g ${OUTLINE}>
+      ${LEGS("#5a4a6b", "#4c3d5c")}
+      <path d="M17,24 Q26,19 35,24 L39,45 Q26,50 13,45 Z" fill="#ff85a1"/>
+      <path d="M13.8,41 Q26,46 38.2,41 L39,45 Q26,50 13,45 Z" fill="#ef6292" stroke="none"/>
+      <circle cx="38" cy="34" r="3.6" fill="#ffd9b3"/>
+      <circle cx="26" cy="12" r="11.5" fill="#7a4a2b"/>
+      <rect x="12.6" y="9" width="5" height="16" rx="2.5" fill="#7a4a2b"/>
+      <rect x="30.4" y="9" width="5" height="16" rx="2.5" fill="#7a4a2b"/>
+      <circle cx="26" cy="14" r="9.3" fill="#ffd9b3" stroke="none"/>
+      <path d="M17.5,10.5 Q20,5.5 26,5.5 Q32,5.5 34.5,10.5 Q30,8 26,8 Q22,8 17.5,10.5 Z" fill="#7a4a2b" stroke="none"/>
+    </g>
+    <circle cx="34.5" cy="6" r="2.6" fill="#ffd166" stroke="#e0a93e" stroke-width="1.2"/>
+    ${FACE}`;
+
+  // 儿子：绿 T 恤 + 反戴蓝帽
+  const SVG_SON = `
+    <g ${OUTLINE}>
+      ${LEGS("#3d4a5c", "#2f3a49")}
+      <rect x="13" y="22" width="23" height="24" rx="9" fill="#58c15c"/>
+      <rect x="13" y="34" width="23" height="6" fill="#43a44b" stroke="none"/>
+      <circle cx="37" cy="36" r="4" fill="#ffd9b3"/>
+      <circle cx="26" cy="13" r="11" fill="#ffd9b3"/>
+    </g>
+    <g stroke="#3861b8" stroke-width="1.6" stroke-linejoin="round" style="paint-order:stroke fill;">
+      <path d="M14.5,11 a11.5,11.5 0 0 1 23,0 l0,-1.5 a11.5,10 0 0 0 -23,0 Z" fill="#4f86f7"/>
+      <rect x="5" y="6.5" width="10" height="4" rx="2" fill="#4f86f7"/>
+    </g>
+    ${FACE}`;
+
+  // 女儿：黄色小裙子 + 双马尾红蝴蝶结
+  const SVG_GIRL = `
+    <g ${OUTLINE}>
+      ${LEGS("#c96a7c", "#b55a6c")}
+      <path d="M17,24 Q26,19 35,24 L38.5,45 Q26,50 13.5,45 Z" fill="#ffd166"/>
+      <path d="M14.2,41.5 Q26,46 37.8,41.5 L38.5,45 Q26,50 13.5,45 Z" fill="#f4b53f" stroke="none"/>
+      <circle cx="12.5" cy="11.5" r="4.8" fill="#8a5633"/>
+      <circle cx="39.5" cy="11.5" r="4.8" fill="#8a5633"/>
+      <circle cx="26" cy="13" r="10" fill="#ffd9b3"/>
+      <path d="M18,10.5 Q20,5 26,5 Q32,5 34,10.5 Q30,7.5 26,7.5 Q22,7.5 18,10.5 Z" fill="#8a5633" stroke="none"/>
+    </g>
+    <circle cx="12.5" cy="7.5" r="2.2" fill="#f45b69" stroke="#c23a4a" stroke-width="1"/>
+    <circle cx="39.5" cy="7.5" r="2.2" fill="#f45b69" stroke="#c23a4a" stroke-width="1"/>
+    ${FACE}`;
+
+  const MEMBERS = [
+    { id: "dad", size: 1.0, svg: SVG_DAD },
+    { id: "mom", size: 0.95, svg: SVG_MOM },
+    { id: "son", size: 0.74, svg: SVG_SON },
+    { id: "daughter", size: 0.68, svg: SVG_GIRL },
+  ];
+
   // ---------- 状态 ----------
   const home = DATA.home || { lat: 30, lng: 110 };
   const ch = {
@@ -192,6 +278,47 @@
     facing: 1, // 1 右 -1 左
     walking: false,
   };
+
+  const family = MEMBERS.map((m, i) => {
+    const el = document.createElement("div");
+    el.className = "member";
+    el.innerHTML =
+      `<div class="char-shadow"></div>` +
+      `<div class="char-flip"><svg class="char-svg" viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg">${m.svg}</svg></div>`;
+    familyBox.appendChild(el);
+    return {
+      ...m, el,
+      flip: el.querySelector(".char-flip"),
+      x: ch.x - i * 24,
+      y: ch.y + (i % 2 ? 6 : -4) * (i ? 1 : 0),
+      facing: 1,
+    };
+  });
+
+  // 领队走过的路径记录，跟队成员沿路径取点
+  const hist = [];
+  function pushHist(x, y) {
+    const last = hist[hist.length - 1];
+    if (!last || Math.hypot(x - last.x, y - last.y) > 2) {
+      hist.push({ x, y });
+      if (hist.length > 500) hist.splice(0, hist.length - 500);
+    }
+  }
+  function samplePos(distBack) {
+    let d = 0;
+    let prev = { x: ch.x, y: ch.y };
+    for (let i = hist.length - 1; i >= 0; i--) {
+      const p = hist[i];
+      const seg = Math.hypot(prev.x - p.x, prev.y - p.y);
+      if (seg > 0 && d + seg >= distBack) {
+        const t = (distBack - d) / seg;
+        return { x: prev.x + (p.x - prev.x) * t, y: prev.y + (p.y - prev.y) * t };
+      }
+      d += seg;
+      prev = p;
+    }
+    return null;
+  }
 
   const cam = {
     x: ch.x,
@@ -590,9 +717,8 @@
 
     if (moving !== ch.walking) {
       ch.walking = moving;
-      charEl.classList.toggle("walking", moving);
+      for (const f of family) f.el.classList.toggle("walking", moving);
     }
-    charFlip.classList.toggle("flip", ch.facing < 0);
 
     // 缩放平滑
     cam.z += (cam.tz - cam.z) * Math.min(1, dt * 10);
@@ -616,12 +742,36 @@
     world.style.transform =
       `translate(${(vw / 2 - cam.x * z).toFixed(2)}px, ${(vh / 2 - cam.y * z).toFixed(2)}px) scale(${z.toFixed(4)})`;
 
-    // 标记 / 小人反向缩放，保持屏幕上大小基本恒定
+    // 标记 / 人物反向缩放，保持屏幕上大小基本恒定
     const inv = clamp(1 / z, 0.4, 1.5);
     world.style.setProperty("--inv", inv.toFixed(3));
     world.classList.toggle("zoomed-out", z < 0.7);
-    charEl.style.transform =
-      `translate(${ch.x.toFixed(1)}px, ${ch.y.toFixed(1)}px) scale(${clamp(1 / z, 0.5, 1.8).toFixed(3)})`;
+
+    // 一家人：爸爸带路，其他人沿走过的路径跟队
+    const charScale = clamp(1 / z, 0.5, 1.8);
+    const spacing = 30 * charScale;
+    pushHist(ch.x, ch.y);
+    family[0].x = ch.x;
+    family[0].y = ch.y;
+    family[0].facing = ch.facing;
+    for (let i = 1; i < family.length; i++) {
+      const f = family[i];
+      const t = samplePos(i * spacing);
+      if (t) {
+        const k = Math.min(1, dt * 9);
+        const nx = f.x + (t.x - f.x) * k;
+        const ny = f.y + (t.y - f.y) * k;
+        if (Math.abs(nx - f.x) > 0.15) f.facing = nx > f.x ? 1 : -1;
+        f.x = nx;
+        f.y = ny;
+      }
+    }
+    for (const f of family) {
+      f.el.style.zIndex = 20 + ((f.y / 12) | 0);
+      f.el.style.transform =
+        `translate(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px) scale(${(charScale * f.size).toFixed(3)})`;
+      f.flip.classList.toggle("flip", f.facing < 0);
+    }
 
     // 地图描边宽度 / 浪花圈 / 陆地投影偏移随缩放调整
     landPath.setAttribute("stroke-width", Math.max(0.8, 3 / z).toFixed(2));

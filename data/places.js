@@ -20,7 +20,7 @@
  *     photos - 照片 URL 数组（可选，留空显示占位图）
  */
 window.TRAVEL_DATA = {
-  // 出生点 / 家（小人初始站的位置）
+  // 出生点 / 家（一家人初始站的位置）
   home: { name: "家", lat: 39.9, lng: 116.4 },
 
   places: [
