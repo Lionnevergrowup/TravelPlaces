@@ -25,10 +25,12 @@
 
 ```
 index.html              页面结构（含卡通小人 SVG）
-css/style.css           全部样式（卡通风格、动画、响应式）
-js/app.js               核心逻辑：相机、键盘/摇杆/触摸输入、地点交互
+css/style.css           全部样式（卡通贴纸风、动画、响应式）
+css/fonts.css           卡通字体声明（站酷快乐体，自托管）
+js/app.js               核心逻辑：相机、键盘/摇杆/触摸输入、地点交互、小飞机动画
 js/world-map.js         世界地图轮廓（由 Natural Earth 数据自动生成，勿手改）
 data/places.js          ★ 旅行数据（目前是示例数据）
+assets/fonts/           站酷快乐体 woff2 分片（浏览器按需加载，国内外都可访问）
 assets/icon.svg         网站图标
 manifest.webmanifest    PWA 清单（支持添加到主屏幕）
 ```

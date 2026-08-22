@@ -1,13 +1,21 @@
 /* ============ 基础 ============ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  /* 卡通标题字体（站酷快乐体），加载失败时退回系统字体 */
+  --font-fun: "ZCOOL KuaiLe", "PingFang SC", "Hiragino Sans GB",
+              "Microsoft YaHei", "Segoe UI", sans-serif;
+  --ink: #35405a;            /* 描边墨色 */
+  --sticker-shadow: 0 4px 0 rgba(53, 64, 90, 0.22);  /* 贴纸硬阴影 */
+}
+
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
                "Microsoft YaHei", "Segoe UI", sans-serif;
-  background: #7ec8e3;
+  background: #62c4ea;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
@@ -21,10 +29,11 @@ html, body {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  /* 海洋 */
+  /* 明快的卡通海洋 */
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.25), transparent 55%),
-    linear-gradient(180deg, #8fd3ee 0%, #6fbfe0 50%, #5cb2d6 100%);
+    radial-gradient(ellipse at 30% 15%, rgba(255,255,255,0.35), transparent 50%),
+    radial-gradient(ellipse at 75% 85%, rgba(255,255,255,0.15), transparent 45%),
+    linear-gradient(180deg, #7dd4f2 0%, #55bce6 55%, #3fa9d8 100%);
 }
 
 #world {
@@ -33,10 +42,6 @@ html, body {
   top: 0;
   transform-origin: 0 0;
   will-change: transform;
-  /* 海面淡淡的经纬网格（15° 一格） */
-  background-image:
-    repeating-linear-gradient(0deg,   rgba(255,255,255,0.10) 0 2px, transparent 2px 150px),
-    repeating-linear-gradient(90deg,  rgba(255,255,255,0.10) 0 2px, transparent 2px 150px);
 }
 
 #map-svg {
@@ -47,9 +52,15 @@ html, body {
   overflow: visible;
 }
 
+/* 陆地"厚度"投影 */
+#land-shadow {
+  fill: rgba(23, 84, 120, 0.32);
+  transform: translateY(14px);
+}
+
 #land {
-  fill: #b8e39b;
-  stroke: #5da154;
+  fill: #a6e578;
+  stroke: #3e8e41;
   stroke-linejoin: round;
   stroke-linecap: round;
   paint-order: stroke fill;
@@ -116,6 +127,77 @@ html, body {
   background: rgba(20, 60, 80, 0.28);
 }
 
+/* ============ 海洋装饰 & 小飞机 & 云 ============ */
+.decor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.decor > span {
+  position: absolute;
+  display: block;
+  transform: translate(-50%, -50%) scale(var(--inv, 1));
+  font-size: 30px;
+  line-height: 1;
+  opacity: 0.92;
+  text-shadow: 0 3px 5px rgba(15, 60, 90, 0.25);
+}
+.decor > span > i {
+  display: block;
+  font-style: normal;
+  animation: decor-bob 3.2s ease-in-out infinite alternate;
+}
+@keyframes decor-bob {
+  from { transform: translateY(0) rotate(-3deg); }
+  to   { transform: translateY(-7px) rotate(3deg); }
+}
+
+#plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  z-index: 6;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 3px rgba(15, 60, 90, 0.3));
+}
+
+#clouds {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+}
+.cloud::before, .cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+.cloud::before { width: 55%; height: 160%; left: 14%; bottom: 28%; }
+.cloud::after  { width: 42%; height: 120%; right: 16%; bottom: 32%; }
+.c1 { width: 150px; height: 42px; top: 13%; opacity: 0.9;  animation: cloud-drift 110s linear infinite; animation-delay: -25s; }
+.c2 { width: 105px; height: 30px; top: 36%; opacity: 0.7;  animation: cloud-drift 160s linear infinite; animation-delay: -90s; }
+.c3 { width: 185px; height: 52px; top: 68%; opacity: 0.55; animation: cloud-drift 130s linear infinite; animation-delay: -55s; }
+@keyframes cloud-drift {
+  from { transform: translateX(-240px); }
+  to   { transform: translateX(calc(100vw + 240px)); }
+}
+
 /* ============ 地点标记 ============ */
 .marker {
   position: absolute;
@@ -148,23 +230,25 @@ html, body {
   border-radius: 50% 50% 50% 8px;
   background: #ffffff;
   border: 3px solid #ff8f5c;
-  box-shadow: 0 3px 10px rgba(30, 60, 90, 0.25);
+  box-shadow: 0 0 0 2.5px #fff, 0 5px 0 rgba(53, 64, 90, 0.22);
   font-size: 24px;
   transform: rotate(-8deg);
   transition: transform 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
 }
 
 .marker-label {
-  margin-top: 5px;
-  padding: 2px 9px;
+  margin-top: 7px;
+  padding: 2px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid rgba(93, 161, 84, 0.5);
-  font-size: 13px;
-  font-weight: 600;
-  color: #2c4a3e;
+  background: #fffdf7;
+  border: 2px solid var(--ink);
+  font-family: var(--font-fun);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: var(--ink);
   white-space: nowrap;
-  box-shadow: 0 2px 5px rgba(30, 60, 90, 0.15);
+  box-shadow: 0 3px 0 rgba(53, 64, 90, 0.2);
 }
 
 .marker.wishlist .marker-bubble {
@@ -219,23 +303,33 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 3px 10px rgba(30, 60, 90, 0.2);
-  font-size: 17px;
-  font-weight: 800;
-  color: #1e3a5f;
+  padding: 8px 18px;
+  border-radius: 18px;
+  background: #fffdf7;
+  border: 3px solid var(--ink);
+  box-shadow: var(--sticker-shadow);
+  font-family: var(--font-fun);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  transform: rotate(-2deg);
 }
-.hud-emoji { font-size: 20px; }
+.hud-emoji { font-size: 21px; }
 
 #hud-count {
   align-self: flex-start;
-  padding: 4px 12px;
+  margin-left: 6px;
+  padding: 4px 13px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  font-size: 13px;
-  color: #33566b;
+  background: #fffdf7;
+  border: 2px solid var(--ink);
+  box-shadow: 0 3px 0 rgba(53, 64, 90, 0.2);
+  font-family: var(--font-fun);
+  font-size: 13.5px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  transform: rotate(-1deg);
 }
 #hud-count b { color: #f45b69; }
 
@@ -254,11 +348,14 @@ html, body {
   border-radius: 999px;
   background: #f45b69;
   color: #fff;
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-fun);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 1px;
   white-space: nowrap;
   max-width: calc(100vw - 24px);
-  box-shadow: 0 4px 14px rgba(244, 91, 105, 0.5);
+  border: 3px solid #fff;
+  box-shadow: 0 5px 0 rgba(53, 64, 90, 0.28), 0 8px 20px rgba(244, 91, 105, 0.4);
   cursor: pointer;
   animation: hint-pop 0.25s ease-out;
 }
@@ -287,21 +384,21 @@ html, body {
 }
 
 .ctrl-btn {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 3px 8px rgba(30, 60, 90, 0.25);
+  width: 46px;
+  height: 46px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: #fffdf7;
+  box-shadow: var(--sticker-shadow);
   font-size: 19px;
   font-weight: 700;
-  color: #1e3a5f;
+  color: var(--ink);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.ctrl-btn:active { transform: scale(0.92); background: #fff; }
+.ctrl-btn:active { transform: translateY(3px) scale(0.95); box-shadow: 0 1px 0 rgba(53, 64, 90, 0.22); }
 
 /* ============ 虚拟摇杆 ============ */
 #joystick {
@@ -311,8 +408,8 @@ html, body {
   width: 118px;
   height: 118px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  border: 2.5px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.28);
+  border: 3px solid rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(2px);
   z-index: 40;
   display: none;
@@ -322,11 +419,12 @@ html, body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 3px 8px rgba(30, 60, 90, 0.3);
+  background: #fffdf7;
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 rgba(53, 64, 90, 0.25);
   transform: translate(-50%, -50%);
 }
 /* 触屏设备显示摇杆 */
@@ -373,9 +471,10 @@ html, body {
   max-height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: 24px;
+  border-radius: 26px;
   background: #fffdf7;
-  box-shadow: 0 12px 40px rgba(10, 30, 50, 0.35);
+  border: 3.5px solid var(--ink);
+  box-shadow: 0 8px 0 rgba(53, 64, 90, 0.25), 0 18px 45px rgba(10, 30, 50, 0.3);
   padding: 22px;
   animation: card-pop 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
@@ -396,13 +495,21 @@ html, body {
   flex: none;
   border-radius: 20px;
   background: #ffeede;
-  border: 2.5px solid #ffd7b3;
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 rgba(53, 64, 90, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 34px;
+  transform: rotate(-4deg);
 }
-#card-name { font-size: 24px; color: #1e3a5f; }
+#card-name {
+  font-family: var(--font-fun);
+  font-weight: 400;
+  letter-spacing: 2px;
+  font-size: 27px;
+  color: var(--ink);
+}
 .card-sub { margin-top: 2px; font-size: 14px; color: #7b8fa3; }
 
 .card-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -419,10 +526,11 @@ html, body {
 .card-visits { display: flex; flex-direction: column; gap: 12px; }
 
 .visit {
-  border: 2px solid #f2e8d8;
-  border-radius: 16px;
+  border: 2.5px solid #e8ddc8;
+  border-radius: 18px;
   padding: 12px 14px;
   background: #fff;
+  box-shadow: 0 3px 0 rgba(53, 64, 90, 0.08);
 }
 .visit-date {
   font-size: 12.5px;
@@ -480,6 +588,7 @@ html, body {
   width: min(360px, 88vw);
   height: 100%;
   background: #fffdf7;
+  border-left: 3.5px solid var(--ink);
   box-shadow: -8px 0 30px rgba(10, 30, 50, 0.3);
   display: flex;
   flex-direction: column;
@@ -497,7 +606,13 @@ html, body {
   padding: 18px 20px 12px;
   border-bottom: 2px solid #f2e8d8;
 }
-.drawer-head h3 { font-size: 18px; color: #1e3a5f; }
+.drawer-head h3 {
+  font-family: var(--font-fun);
+  font-weight: 400;
+  letter-spacing: 2px;
+  font-size: 19px;
+  color: var(--ink);
+}
 
 #drawer-list {
   flex: 1;
@@ -523,12 +638,14 @@ html, body {
 .drawer-item .d-go {
   flex: none;
   padding: 6px 14px;
-  border: none;
+  border: 2px solid var(--ink);
   border-radius: 999px;
   background: #4f86f7;
   color: #fff;
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-fun);
+  font-size: 13.5px;
+  letter-spacing: 1px;
+  box-shadow: 0 3px 0 rgba(53, 64, 90, 0.25);
   cursor: pointer;
 }
 .drawer-item.wishlist .d-go { background: #9aa7b8; }
@@ -541,13 +658,20 @@ html, body {
   max-height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: 24px;
+  border-radius: 26px;
   background: #fffdf7;
-  box-shadow: 0 12px 40px rgba(10, 30, 50, 0.35);
+  border: 3.5px solid var(--ink);
+  box-shadow: 0 8px 0 rgba(53, 64, 90, 0.25), 0 18px 45px rgba(10, 30, 50, 0.3);
   padding: 24px;
   animation: card-pop 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
-#help-card h2 { color: #1e3a5f; margin-bottom: 14px; }
+#help-card h2 {
+  font-family: var(--font-fun);
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
 
 .help-cols { display: flex; gap: 14px; flex-wrap: wrap; }
 .help-block {
@@ -587,17 +711,18 @@ kbd {
 #help-start {
   display: block;
   margin: 18px auto 0;
-  padding: 12px 42px;
-  border: none;
+  padding: 12px 44px;
+  border: 3px solid var(--ink);
   border-radius: 999px;
   background: #f45b69;
   color: #fff;
-  font-size: 17px;
-  font-weight: 800;
-  box-shadow: 0 4px 14px rgba(244, 91, 105, 0.45);
+  font-family: var(--font-fun);
+  font-size: 19px;
+  letter-spacing: 3px;
+  box-shadow: 0 5px 0 rgba(53, 64, 90, 0.3);
   cursor: pointer;
 }
-#help-start:active { transform: scale(0.95); }
+#help-start:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(53, 64, 90, 0.3); }
 
 /* 小屏优化 */
 @media (max-width: 480px) {

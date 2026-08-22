@@ -33,6 +33,37 @@
   mapSvg.setAttribute("height", MAP.H);
   mapSvg.setAttribute("viewBox", `0 0 ${MAP.W} ${MAP.H}`);
   landPath.setAttribute("d", MAP.PATH);
+  const landShadow = document.getElementById("land-shadow");
+  landShadow.setAttribute("d", MAP.PATH);
+
+  // ---------- 海洋小装饰 ----------
+  const DECOR = [
+    { lng: -152, lat: 12,  e: "🐳" },
+    { lng: -128, lat: -22, e: "🌊" },
+    { lng: -168, lat: -38, e: "🐠" },
+    { lng: -40,  lat: 28,  e: "⛵" },
+    { lng: -28,  lat: -22, e: "🌊" },
+    { lng: -44,  lat: 52,  e: "🌊" },
+    { lng: 74,   lat: -28, e: "🌊" },
+    { lng: 88,   lat: 2,   e: "⛵" },
+    { lng: 165,  lat: 40,  e: "🌊" },
+    { lng: 2,    lat: 82,  e: "❄️" },
+    { lng: 140,  lat: -55, e: "🐧" },
+  ];
+  const decorBox = document.getElementById("decor");
+  DECOR.forEach((d, i) => {
+    const el = document.createElement("div");
+    el.className = "decor";
+    el.style.left = ((d.lng + 180) * 10) + "px";
+    el.style.top = ((90 - d.lat) * 10) + "px";
+    const span = document.createElement("span");
+    const inner = document.createElement("i");
+    inner.textContent = d.e;
+    inner.style.animationDelay = (-i * 0.7) + "s";
+    span.appendChild(inner);
+    el.appendChild(span);
+    decorBox.appendChild(el);
+  });
 
   // ---------- 地点标记 ----------
   const places = DATA.places.map((p) => ({
@@ -80,18 +111,56 @@
   }
 
   // ---------- 旅行路线（按首次到访时间连线） ----------
-  (function buildTrail() {
+  const trailPts = (() => {
     const visited = places
       .filter((p) => p.visits && p.visits.length > 0)
       .map((p) => ({ p, first: p.visits.map((v) => v.date).sort()[0] }))
       .sort((a, b) => (a.first < b.first ? -1 : 1))
       .map((o) => o.p);
-    if (visited.length < 2) return;
+    if (visited.length < 2) return null;
     trailLine.setAttribute(
       "points",
       visited.map((p) => `${p.x},${p.y}`).join(" ")
     );
+    return visited.map((p) => [p.x, p.y]);
   })();
+
+  // ---------- 沿路线飞行的小飞机 ----------
+  const planeEl = document.getElementById("plane");
+  let planeSegs = null; // [{x1,y1,dx,dy,len,start}], totalLen
+  if (trailPts) {
+    let total = 0;
+    const segs = [];
+    for (let i = 0; i < trailPts.length - 1; i++) {
+      const [x1, y1] = trailPts[i];
+      const [x2, y2] = trailPts[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      if (len < 1) continue;
+      segs.push({ x1, y1, dx: (x2 - x1) / len, dy: (y2 - y1) / len, len, start: total });
+      total += len;
+    }
+    if (segs.length) {
+      planeSegs = { segs, total };
+      planeEl.classList.remove("hidden");
+    }
+  }
+
+  function updatePlane(now, inv) {
+    if (!planeSegs) return;
+    const SPEED = 130; // 世界单位/秒
+    const dist = (now / 1000 * SPEED) % planeSegs.total;
+    let seg = planeSegs.segs[0];
+    for (const s of planeSegs.segs) {
+      if (dist >= s.start && dist <= s.start + s.len) { seg = s; break; }
+    }
+    const t = dist - seg.start;
+    const x = seg.x1 + seg.dx * t;
+    const y = seg.y1 + seg.dy * t;
+    // ✈️ emoji 默认朝右上 45°，旋转对齐航向
+    const deg = Math.atan2(seg.dy, seg.dx) * 180 / Math.PI + 45;
+    planeEl.style.transform =
+      `translate(${(x - 15).toFixed(1)}px, ${(y - 15).toFixed(1)}px) scale(${inv}) rotate(${deg.toFixed(1)}deg)`;
+  }
 
   // ---------- 统计 ----------
   const visitedTotal = places.filter((p) => p.visits && p.visits.length > 0).length;
@@ -537,9 +606,13 @@
     charEl.style.transform =
       `translate(${ch.x.toFixed(1)}px, ${ch.y.toFixed(1)}px) scale(${clamp(1 / z, 0.5, 1.8).toFixed(3)})`;
 
-    // 地图描边宽度随缩放调整
-    landPath.setAttribute("stroke-width", Math.max(0.8, 2.4 / z).toFixed(2));
+    // 地图描边宽度 / 陆地投影偏移随缩放调整
+    landPath.setAttribute("stroke-width", Math.max(0.8, 3 / z).toFixed(2));
     trailLine.setAttribute("stroke-width", Math.max(2, 4.5 / z).toFixed(2));
+    landShadow.style.transform = `translateY(${clamp(12 / z, 3, 22).toFixed(1)}px)`;
+
+    // 小飞机
+    updatePlane(now, inv);
 
     // 附近地点检测（每 100ms 一次即可）
     if (now - lastActiveCheck > 100) {
