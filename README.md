@@ -32,7 +32,12 @@ js/world-map.js         世界地图轮廓（由 Natural Earth 数据自动生�
 data/places.js          内置示例数据（没导入文件时显示）
 data/travel-data.example.json  用户数据文件格式示例
 assets/fonts/           站酷快乐体 woff2 分片（浏览器按需加载，国内外都可访问）
-assets/icon.svg         网站图标
+favicon.ico             浏览器标签小图标（16/32/48，兼容 Safari 和旧浏览器）
+assets/icon.svg         浏览器标签小图标（矢量版，透明底 + 白色贴纸边，深浅标签栏都清楚）
+assets/icon-app.svg     App 图标矢量原稿（改图标时编辑它，再导出下面的 PNG）
+assets/apple-touch-icon.png   iPhone/iPad「添加到主屏幕」图标 180×180
+assets/icon-192.png / icon-512.png   安卓 / Windows 安装图标
+assets/icon-maskable-512.png  安卓自适应图标（内容缩在安全区内）
 manifest.webmanifest    PWA 清单（支持添加到主屏幕）
 ```
 
